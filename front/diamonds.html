@@ -1,0 +1,306 @@
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>diamonds</title>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a href="./index.html" id="link-index">Homepage</a>
+    <a href="./diamonds.html" id="link-diamondsList">diamonds list</a>
+    
+  </nav>
+
+  <hr>
+  <h2>Add a new diamond</h2>
+  <div class="horizontal_form">
+    <label for="carat">carat:</label><br />
+    <input type="number" id="carat" name="carat" /><br />
+    <label for="cut">cut:</label><br />
+    <input type="text" id="cut" name="cut" /><br />
+    <label for="color">color:</label><br />
+    <input type="text" id="color" name="color" /><br />
+    <label for="clarity">clarity:</label><br />
+    <input type="text" id="clarity" name="clarity"/><br /><br />
+    <label for="depth">depth:</label><br />
+    <input type="number" id="depth" name="depth"/><br /><br />
+    <label for="table">table:</label><br />
+    <input type="number" id="table" name="table"/><br /><br />
+    <label for="price">price:</label><br />
+    <input type="number" id="price" name="price"/><br /><br />
+    <label for="x">x:</label><br />
+    <input type="number" id="x" name="x"/><br /><br />
+    <label for="y">y:</label><br />
+    <input type="number" id="y" name="y"/><br /><br />
+    <label for="z">z:</label><br />
+    <input type="number" id="z" name="z"/><br /><br />
+
+    
+    <input id type="submit" value="Submit" onclick="submit_diamond()" />
+
+  </div>
+  <hr>
+  <h2> search for a diamond</h2>
+  <form action='#'>
+    <input type='text' id='searchInput' name='searchInput' />
+    <button type="submit"> search </button>
+  </form>
+
+  <table>
+
+    <thead>
+      <tr>
+        <td>id</td>
+        <td>carat</td>
+        <td>cut</td>
+        <td>color</td>
+        <td>clarity</td>
+        <td>depth</td>
+        <td>table</td>
+        <td>price</td>
+        <td>x</td>
+        <td>y</td>
+        <td>z</td>
+
+      </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
+  <script>
+    const searchParams = new URLSearchParams(window.location.search);
+    const searchQuery = searchParams.get('searchInput');
+    document.getElementById('searchInput').value = searchQuery;
+    const serverUrl = new URL("http://localhost:5000");
+    function render_list() {
+      //reset list to be empty
+      document.querySelector("tbody").innerHTML = "";
+      itemsList.map(diamond => {
+        if (!searchQuery || diamond.bookName.includes(searchQuery) || diamond.author.includes(searchQuery)) return diamond;
+      }).forEach(diamond => {
+        if (!diamond) return;
+        // translates each diamond to an html table row with each value in a cell
+
+        const row = document.createElement("tr");
+
+        const cell1 = document.createElement("td");
+        cell1.textContent = diamond.id;
+        row.appendChild(cell1);
+
+        const cell2 = document.createElement("td");
+        cell2.textContent = diamond.carat;
+        row.appendChild(cell2);
+
+        const cell3 = document.createElement("td");
+        cell3.textContent = diamond.cut;
+        row.appendChild(cell3);
+
+        const cell4 = document.createElement("td");
+        cell4.textContent = diamond.color;
+        row.appendChild(cell4);
+        
+        const cell5 = document.createElement("td");
+        cell5.textContent = diamond.clarity;
+        row.appendChild(cell5);
+
+        const cell6 = document.createElement("td");
+        cell6.textContent = diamond.depth;
+        row.appendChild(cell6);
+
+        const cell7 = document.createElement("td");
+        cell7.textContent = diamond.table;
+        row.appendChild(cell7);
+
+        const cell8 = document.createElement("td");
+        cell8.textContent = diamond.price;
+        row.appendChild(cell8);
+        
+        const cell9 = document.createElement("td");
+        cell8.textContent = diamond.x;
+        row.appendChild(cell8);
+
+        const cell10 = document.createElement("td");
+        cell9.textContent = diamond.y;
+        row.appendChild(cell9);
+
+        const cell11 = document.createElement("td");
+        cell9.textContent = diamond.z;
+        row.appendChild(cell9);
+
+
+        //set the delete button to call the delete_diamond function with the diamond's id
+        const cell12 = document.createElement("td");
+        cell5.innerHTML = ` <button type="button" onclick="delete_diamond('${diamond.id}')">Remove diamond</button>`;
+        row.appendChild(cell12);
+
+        document.querySelector("tbody").appendChild(row);
+      });
+    }
+
+
+    //deletes a book from the db and then updates the list
+    async function delete_diamond(diamond){
+          try{
+            alert('the didamond id: ${diamond} will be removed');
+
+            //go over all the diamonds in the list
+            for(let i=0;i<itemsList.length;i++){
+              let currentdiamond = itemsList[i];
+              if(currentdiamond.id == diamond){
+
+                //build request string to send to server
+                let requestString = serverUrl + '/delete?' + new URLSearchParams({
+                  id: diamond,
+                  callType: "diamond"
+                })
+
+                //send the request to the server
+                let response = await fetch(requestString, {
+                  credentials: 'include'
+                })
+                console.log(response);
+
+                //if successfull -> remove the diamond from the list
+                itemsList.splice(i,1)
+                continue;
+              }
+            }
+
+            render_list();
+
+          }catch(err){
+            console.log(err);
+            alert(err);
+          }
+        }
+
+        //adds a diamond to the db and then updates the list
+        async function submit_diamond() {
+          try {
+
+          //save dom elements of the inputs
+          let ID = document.getElementById("ID");
+          let carat = document.getElementById("carat");
+          let cut = document.getElementById("cut");
+          let color = document.getElementById("color");
+          let clarity = document.getElementById("clarity");
+          let depth = document.getElementById("depth");
+          let table = document.getElementById("table");
+          let price = document.getElementById("price");
+          let x = document.getElementById("x");
+          let y = document.getElementById("y");
+          let z = document.getElementById("z");
+
+          //save the values of the inputs
+          let IDValue = ID.value;
+          let caratValue = carat.value;
+          let cutValue = cut.value;
+          let colorValue = colorType.value;
+          let clarityValue = clarityType.value;
+          let depthValue = depth.value;
+          let tableValue = table.value;
+          let priceValue = price.value;
+          let xValue = xType.value;
+          let yValue = yType.value;
+          let zValue = zType.value;
+
+          //exists function if missing input
+          if(!IDValue || !caratValue || !cutValue || !colorValue || !depthValue || !depthValue || !tableValue || !xValue || !yValue || !zValue  ) return;
+
+          //build request string to send to server
+          let requestString = serverUrl + '/add?' + new URLSearchParams({
+            ID: IDValue,
+            carat: caratValue,
+            cut: cutValue,
+            color: colorValue,
+            clarity: clarityValue,
+            depth: depthValue,
+            table: tableValue,
+            price: priceValue,
+            x: xValue,
+            y: yValue,
+            z: zValue,
+
+            callType: "diamonds"
+          })
+
+          //send the request to the server
+          let response = await fetch(requestString, {
+            credentials: 'include'
+          })
+          console.log(response);
+
+          //if successfull -> add the book to the list on the screen
+          // לבדוק אם זה הגיוני
+          itemsList.push({
+            id: Math.random(),
+            ID: IDValue,
+            carat: caratValue,
+            cut: cutValue,
+            color: colorValue,
+            clarity: clarityValue,
+            depth: depthValue,
+            table: tableValue,
+            price: priceValue,
+            x: xValue,
+            y: yValue,
+            z: zValue,
+          })
+
+          //reset the values
+          ID.value = "";
+          carat.value = "";
+          cut.value = "";
+          colorType.value = "";
+          clarityType.value = "";
+          depth.value = "";
+          table.value = "";
+          price.value = "";
+          xType.value = "";
+          yType.value = "";
+          zType.value = "";
+
+
+          render_list();
+
+        } catch (err) {
+          console.log(err);
+          alert(err);
+        }
+      }
+
+      //retrieves the diamonds from the db and updates the list
+      async function get_all_diamonds() {
+        try {
+
+          //build request string to send to server
+          let requestString = serverUrl + '/getAll?' + new URLSearchParams({
+            callType: "diamonds"
+          })
+
+          //send the request to the server
+          let response = await fetch(requestString, {
+            credentials: 'include'
+          })
+          console.log(response);
+
+          //if successfull -> add the book to the list on the screen
+          if (response) itemsList = response;
+
+          render_list();
+        } catch (err) {
+          console.log(err);
+          alert(err);
+        }
+      }
+
+      get_all_diamonds();
+
+    </script>
+
+  </body>
+
+  </html>
