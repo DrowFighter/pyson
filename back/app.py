@@ -20,6 +20,8 @@ if __name__ == "__main__":
 # function which connects the SQL controler with the flask messageHandler
 def messageCallback(action, data):
     result = None
+    print('app.messageCallback',action, data)
+    
     if action == 'create' : 
         result = fileParser.create(data)
     elif action == 'getAll' : 
@@ -28,7 +30,6 @@ def messageCallback(action, data):
         result = fileParser.update(data)
     elif action == 'delete' : 
         result = fileParser.delete(data)
-    print ('result', result)
     return result 
 
 

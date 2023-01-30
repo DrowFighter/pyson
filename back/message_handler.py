@@ -6,34 +6,34 @@ messageCallback = None
 
 class MessageHandler:
 
-    def __init__(self, callback,app,cross_origin):
+    def __init__(self, callback, app, cross_origin):
         # app = Flask(__name__)
         messageCallback = callback
 
         @app.route('/add')
         def add():         
-            print(request.args)
+            print('MessageHandler.add',request.args)
             data = request.args
             action = 'create'
             return messageCallback(action, data)
 
         @app.route('/update')           
-        def loan_book():         
-            print(request.args)
+        def update():         
+            print('MessageHandler.update',request.args)
             data = request.args
-            action = 'create'
+            action = 'update'
             return messageCallback(action, data)
 
         @app.route('/getAll')       
         def getAll():         
-            print(request.args)
+            print('MessageHandler.getAll',request.args)
             data = request.args
             action = 'getAll'
             return messageCallback(action, data)
 
         @app.route('/delete')           
         def delete():         
-            print(request.args)
+            print('MessageHandler.delete',request.args)
             data = request.args
             action = 'delete'
             return messageCallback(action, data)

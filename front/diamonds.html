@@ -10,7 +10,7 @@
   <nav class="navbar">
     <a href="./index.html" id="link-index">Homepage</a>
     <a href="./diamonds.html" id="link-diamondsList">diamonds list</a>
-    
+
   </nav>
 
   <hr>
@@ -23,21 +23,21 @@
     <label for="color">color:</label><br />
     <input type="text" id="color" name="color" /><br />
     <label for="clarity">clarity:</label><br />
-    <input type="text" id="clarity" name="clarity"/><br /><br />
+    <input type="text" id="clarity" name="clarity" /><br /><br />
     <label for="depth">depth:</label><br />
-    <input type="number" id="depth" name="depth"/><br /><br />
+    <input type="number" id="depth" name="depth" /><br /><br />
     <label for="table">table:</label><br />
-    <input type="number" id="table" name="table"/><br /><br />
+    <input type="number" id="table" name="table" /><br /><br />
     <label for="price">price:</label><br />
-    <input type="number" id="price" name="price"/><br /><br />
+    <input type="number" id="price" name="price" /><br /><br />
     <label for="x">x:</label><br />
-    <input type="number" id="x" name="x"/><br /><br />
+    <input type="number" id="x" name="x" /><br /><br />
     <label for="y">y:</label><br />
-    <input type="number" id="y" name="y"/><br /><br />
+    <input type="number" id="y" name="y" /><br /><br />
     <label for="z">z:</label><br />
-    <input type="number" id="z" name="z"/><br /><br />
+    <input type="number" id="z" name="z" /><br /><br />
 
-    
+
     <input id type="submit" value="Submit" onclick="submit_diamond()" />
 
   </div>
@@ -74,233 +74,200 @@
     const searchParams = new URLSearchParams(window.location.search);
     const searchQuery = searchParams.get('searchInput');
     document.getElementById('searchInput').value = searchQuery;
+    
     const serverUrl = new URL("http://localhost:5000");
+    const row_value_keys = ['ID', 'carat', 'cut', 'color', 'clarity', 'depth', 'table', 'price', 'x', 'y', 'z'];
+    let itemsList = {}
+    const maxToRender = 100000;
+
+    function add_cell_to_row(row, value) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.appendChild(cell);
+    }
+
     function render_list() {
-      //reset list to be empty
-      document.querySelector("tbody").innerHTML = "";
-      itemsList.map(diamond => {
-        if (!searchQuery || diamond.bookName.includes(searchQuery) || diamond.author.includes(searchQuery)) return diamond;
-      }).forEach(diamond => {
-        if (!diamond) return;
-        // translates each diamond to an html table row with each value in a cell
+      try {
+        //reset list to be empty
+        document.querySelector("tbody").innerHTML = "";
+        let renderedNum = 0;
 
-        const row = document.createElement("tr");
+        // iterate over each diamond
+        for (let key in itemsList){
+          // render max rows of maxToRender
+          if(renderedNum >= maxToRender) break;
 
-        const cell1 = document.createElement("td");
-        cell1.textContent = diamond.id;
-        row.appendChild(cell1);
+          diamond = itemsList[key];
+          if (!diamond) return;
 
-        const cell2 = document.createElement("td");
-        cell2.textContent = diamond.carat;
-        row.appendChild(cell2);
+          // translates each diamond to an html table row with each value in a cell
+          const row = document.createElement("tr");
 
-        const cell3 = document.createElement("td");
-        cell3.textContent = diamond.cut;
-        row.appendChild(cell3);
+          // for each row add all of they diamond values by order of 'row_value_keys'
+          for (let key of row_value_keys) {
+            add_cell_to_row(row, diamond[key] || '')
+          }
 
-        const cell4 = document.createElement("td");
-        cell4.textContent = diamond.color;
-        row.appendChild(cell4);
-        
-        const cell5 = document.createElement("td");
-        cell5.textContent = diamond.clarity;
-        row.appendChild(cell5);
+          //set the delete button to call the delete_diamond function with the diamond's id
+          const deleteBtn = document.createElement("td");
+          deleteBtn.innerHTML = ` <button type="button" onclick="delete_diamond('${diamond.ID}')">Remove diamond</button>`;
+          row.appendChild(deleteBtn);
 
-        const cell6 = document.createElement("td");
-        cell6.textContent = diamond.depth;
-        row.appendChild(cell6);
+          document.querySelector("tbody").appendChild(row);
 
-        const cell7 = document.createElement("td");
-        cell7.textContent = diamond.table;
-        row.appendChild(cell7);
-
-        const cell8 = document.createElement("td");
-        cell8.textContent = diamond.price;
-        row.appendChild(cell8);
-        
-        const cell9 = document.createElement("td");
-        cell8.textContent = diamond.x;
-        row.appendChild(cell8);
-
-        const cell10 = document.createElement("td");
-        cell9.textContent = diamond.y;
-        row.appendChild(cell9);
-
-        const cell11 = document.createElement("td");
-        cell9.textContent = diamond.z;
-        row.appendChild(cell9);
-
-
-        //set the delete button to call the delete_diamond function with the diamond's id
-        const cell12 = document.createElement("td");
-        cell5.innerHTML = ` <button type="button" onclick="delete_diamond('${diamond.id}')">Remove diamond</button>`;
-        row.appendChild(cell12);
-
-        document.querySelector("tbody").appendChild(row);
-      });
+          renderedNum++;
+        }
+      } catch (err) {
+        console.log('render_list.err', err);
+      }
     }
 
 
     //deletes a book from the db and then updates the list
-    async function delete_diamond(diamond){
-          try{
-            alert('the didamond id: ${diamond} will be removed');
+    async function delete_diamond(diamondID) {
+      try {
+        alert(`the diamond id: ${diamondID} will be removed`);
 
-            //go over all the diamonds in the list
-            for(let i=0;i<itemsList.length;i++){
-              let currentdiamond = itemsList[i];
-              if(currentdiamond.id == diamond){
-
-                //build request string to send to server
-                let requestString = serverUrl + '/delete?' + new URLSearchParams({
-                  id: diamond,
-                  callType: "diamond"
-                })
-
-                //send the request to the server
-                let response = await fetch(requestString, {
-                  credentials: 'include'
-                })
-                console.log(response);
-
-                //if successfull -> remove the diamond from the list
-                itemsList.splice(i,1)
-                continue;
-              }
-            }
-
-            render_list();
-
-          }catch(err){
-            console.log(err);
-            alert(err);
-          }
-        }
-
-        //adds a diamond to the db and then updates the list
-        async function submit_diamond() {
-          try {
-
-          //save dom elements of the inputs
-          let ID = document.getElementById("ID");
-          let carat = document.getElementById("carat");
-          let cut = document.getElementById("cut");
-          let color = document.getElementById("color");
-          let clarity = document.getElementById("clarity");
-          let depth = document.getElementById("depth");
-          let table = document.getElementById("table");
-          let price = document.getElementById("price");
-          let x = document.getElementById("x");
-          let y = document.getElementById("y");
-          let z = document.getElementById("z");
-
-          //save the values of the inputs
-          let IDValue = ID.value;
-          let caratValue = carat.value;
-          let cutValue = cut.value;
-          let colorValue = colorType.value;
-          let clarityValue = clarityType.value;
-          let depthValue = depth.value;
-          let tableValue = table.value;
-          let priceValue = price.value;
-          let xValue = xType.value;
-          let yValue = yType.value;
-          let zValue = zType.value;
-
-          //exists function if missing input
-          if(!IDValue || !caratValue || !cutValue || !colorValue || !depthValue || !depthValue || !tableValue || !xValue || !yValue || !zValue  ) return;
+        //go over all the diamonds in the list
+        for (let key in itemsList) {
+          let currentdiamond = itemsList[key];
+          console.log('delete_diamond loop',currentdiamond.ID,diamondID)
+          if(currentdiamond.ID != diamondID) continue;
 
           //build request string to send to server
-          let requestString = serverUrl + '/add?' + new URLSearchParams({
-            ID: IDValue,
-            carat: caratValue,
-            cut: cutValue,
-            color: colorValue,
-            clarity: clarityValue,
-            depth: depthValue,
-            table: tableValue,
-            price: priceValue,
-            x: xValue,
-            y: yValue,
-            z: zValue,
-
-            callType: "diamonds"
+          let requestString = serverUrl + '/delete?' + new URLSearchParams({
+            ID: diamondID
           })
 
           //send the request to the server
-          let response = await fetch(requestString, {
-            credentials: 'include'
-          })
+          const response = await fetch(requestString)
           console.log(response);
 
-          //if successfull -> add the book to the list on the screen
-          // לבדוק אם זה הגיוני
-          itemsList.push({
-            id: Math.random(),
-            ID: IDValue,
-            carat: caratValue,
-            cut: cutValue,
-            color: colorValue,
-            clarity: clarityValue,
-            depth: depthValue,
-            table: tableValue,
-            price: priceValue,
-            x: xValue,
-            y: yValue,
-            z: zValue,
-          })
-
-          //reset the values
-          ID.value = "";
-          carat.value = "";
-          cut.value = "";
-          colorType.value = "";
-          clarityType.value = "";
-          depth.value = "";
-          table.value = "";
-          price.value = "";
-          xType.value = "";
-          yType.value = "";
-          zType.value = "";
-
-
-          render_list();
-
-        } catch (err) {
-          console.log(err);
-          alert(err);
+          //if successfull -> remove the diamondID from the list
+          delete itemsList[key];
+          break;
         }
+
+        render_list();
+
+      } catch (err) {
+        console.log('delete_diamond.err', err);
+        alert(err);
       }
+    }
 
-      //retrieves the diamonds from the db and updates the list
-      async function get_all_diamonds() {
-        try {
+    //adds a diamond to the db and then updates the list
+    async function submit_diamond() {
+      try {
 
-          //build request string to send to server
-          let requestString = serverUrl + '/getAll?' + new URLSearchParams({
-            callType: "diamonds"
-          })
+        //save dom elements of the inputs
+        let carat = document.getElementById("carat");
+        let cut = document.getElementById("cut");
+        let color = document.getElementById("color");
+        let clarity = document.getElementById("clarity");
+        let depth = document.getElementById("depth");
+        let table = document.getElementById("table");
+        let price = document.getElementById("price");
+        let x = document.getElementById("x");
+        let y = document.getElementById("y");
+        let z = document.getElementById("z");
 
-          //send the request to the server
-          let response = await fetch(requestString, {
-            credentials: 'include'
-          })
-          console.log(response);
+        //save the values of the inputs
+        let caratValue = carat.value;
+        let cutValue = cut.value;
+        let colorValue = color.value;
+        let clarityValue = clarity.value;
+        let depthValue = depth.value;
+        let tableValue = table.value;
+        let priceValue = price.value;
+        let xValue = x.value;
+        let yValue = y.value;
+        let zValue = z.value;
 
-          //if successfull -> add the book to the list on the screen
-          if (response) itemsList = response;
+        //exists function if missing input
+        if (!caratValue || !cutValue || !colorValue || !depthValue || !depthValue || !tableValue || !xValue || !yValue || !zValue) return;
 
-          render_list();
-        } catch (err) {
-          console.log(err);
-          alert(err);
+        //build request string to send to server
+        let requestString = serverUrl + '/add?' + new URLSearchParams({
+          carat: caratValue,
+          cut: cutValue,
+          color: colorValue,
+          clarity: clarityValue,
+          depth: depthValue,
+          table: tableValue,
+          price: priceValue,
+          x: xValue,
+          y: yValue,
+          z: zValue
+        })
+
+        //send the request to the server
+        const response = await fetch(requestString)
+        console.log('new submit_diamond id is:', response);
+        if(!response) return;
+        const responseID = await response.json();
+
+        //if successfull -> add the book to the list on the screen
+        // לבדוק אם זה הגיוני
+        itemsList[responseID] = {
+          ID: responseID,
+          carat: caratValue,
+          cut: cutValue,
+          color: colorValue,
+          clarity: clarityValue,
+          depth: depthValue,
+          table: tableValue,
+          price: priceValue,
+          x: xValue,
+          y: yValue,
+          z: zValue,
         }
+
+        //reset the values
+        carat.value = "";
+        cut.value = "";
+        color.value = "";
+        clarity.value = "";
+        depth.value = "";
+        table.value = "";
+        price.value = "";
+        x.value = "";
+        y.value = "";
+        z.value = "";
+
+
+        render_list();
+
+      } catch (err) {
+        console.log('submit_diamond.err', err);
+        alert(err);
       }
+    }
 
-      get_all_diamonds();
+    //retrieves the diamonds from the db and updates the list
+    async function get_all_diamonds() {
+      try {
 
-    </script>
+        //build request string to send to server
+        const requestString = serverUrl + '/getAll'
 
-  </body>
+        //send the request to the server
+        const response = await fetch(requestString)
 
-  </html>
+        //if successfull -> add the book to the list on the screen
+        if (response) itemsList = await response.json();
+
+        render_list();
+      } catch (err) {
+        console.log('get_all_diamonds.err', err);
+        alert(err);
+      }
+    }
+
+    get_all_diamonds();
+
+  </script>
+
+</body>
+
+</html>
